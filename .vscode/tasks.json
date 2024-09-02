@@ -1,0 +1,15 @@
+{
+    "version": "2.0.0",
+    "tasks":[
+        {
+            "label": "Update Conda Environment",
+            "type": "shell",
+            "command": "conda env update --file environment.yml --prune",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}
