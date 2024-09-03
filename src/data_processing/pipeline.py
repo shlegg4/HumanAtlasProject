@@ -42,8 +42,5 @@ def main():
     clustering_processor = ClusteringProcessor(n_clusters=5)
     labels = clustering_processor.fit(reduced_features)
 
-    # Optional: If your data is 2D (e.g., using only 2 principal components), you can plot the clusters
-    # If reduced_features is more than 2D, consider using only the first two components for visualization
-    clustering_processor.plot_clusters(reduced_features[:, :2], labels)
 
     
