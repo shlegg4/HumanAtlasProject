@@ -18,7 +18,7 @@ url1 = 'http://images.proteinatlas.org/46705/108451_A_3_6.jpg'
 url2 = 'http://images.proteinatlas.org/46705/108451_A_1_3.jpg'
 
 # Get the representations for both images
-image1_rep = get_image_representation(url1)
+image1_rep = get_image_representation(url1) 
 image2_rep = get_image_representation(url2)
 
 # Compute cosine similarity for each corresponding patch

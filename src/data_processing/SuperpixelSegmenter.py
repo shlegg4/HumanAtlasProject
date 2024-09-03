@@ -127,6 +127,6 @@ class SuperpixelSegmenter:
 
 # Example Usage:
 if __name__ == "__main__":
-    image_path = '.\outputs/108450_A_1_7.jpg'
+    image_path = '\outputs/108450_A_1_7.jpg'
     segmenter = SuperpixelSegmenter(image_path, n_segments=1000, compactness=10, sigma=1)
     segmenter.segment_and_display()
