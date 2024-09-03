@@ -1,1 +1,1 @@
-from Segment import Segment
+from .Segment import Segment

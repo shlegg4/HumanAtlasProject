@@ -17,12 +17,30 @@ class MongoDBHandler:
         document = segment.to_dict()
         result = self.collection.insert_one(document)
         return result.inserted_id
+    
+    def get_segments(self) -> Segment:
+        """
+        Gets all segments in the collection
+        """
+        segments = []
+        for document in self.collection.find():
+            segment = Segment.from_dict(document)
+            segments.append(segment)
+        
+        return segments
 
     def find_by_vector(self, vector):
         """
         Find a Segment by the vector.
         """
         data = self.collection.find_one({"vector": vector})
+        return Segment.from_dict(data) if data else None
+    
+    def find_by_id(self, segment_id):
+        """
+        Find a Segment by its _id.
+        """
+        data = self.collection.find_one({"_id": segment_id})
         return Segment.from_dict(data) if data else None
 
     def update_segment(self, vector, new_segment=None):
