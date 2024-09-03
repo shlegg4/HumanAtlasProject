@@ -80,9 +80,3 @@ class ImageDownloader:
     def _is_protein_processed(self, protein_name):
         """Checks if the protein has already been processed."""
         return protein_name in self.processed_proteins
-
-# Usage
-protein = "SUCLG2"
-downloader = ImageDownloader(protein=protein)
-downloader.fetch_xml_data()
-downloader.download_images()
