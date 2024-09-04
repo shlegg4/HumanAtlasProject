@@ -48,17 +48,25 @@ class SuperpixelSegmenter:
         variance = np.var(gray_image)
         return variance
 
+    def extract_segment_path(self, mask):
+        """
+        Extract the path (coordinates) of the segment based on the mask.
+        """
+        coords = np.column_stack(np.where(mask))
+        return coords
     
     def save_segments(self):
         """
         Save each segment as an individual image in the output directory, filtering out low-variance segments.
         Set the background to white instead of black. Track accepted and rejected segments.
+        Returns a list of dictionaries containing the path and file path for each segment.
         """
         if self.segments is None:
             raise ValueError("Segmentation has not been performed yet.")
         
         num_segments = np.max(self.segments) + 1
         self.segment_status = np.zeros(num_segments, dtype=bool)  # Track which segments are accepted
+        segments_info = []  # List to store path and file path of each segment
         
         for i in range(num_segments):
             mask = self.segments == i
@@ -75,18 +83,26 @@ class SuperpixelSegmenter:
                 output_path = os.path.join(self.output_dir, f'segment_{i}.png')
                 io.imsave(output_path, segment_image)
                 self.segment_status[i] = True  # Mark as accepted
+                segment_path = self.extract_segment_path(mask)  # Get path (coordinates)
+                segments_info.append({
+                    "path": segment_path,
+                    "file_path": output_path
+                })
                 print(f'Segment {i}/{num_segments} saved to {output_path} with variance {variance:.2f}')
             else:
                 self.segment_status[i] = False  # Mark as rejected
                 #print(f'Segment {i}/{num_segments} discarded due to low variance {variance:.2f}')
+        
+        return segments_info
     
     def segment_and_save(self):
         """
         Perform the full process: segment the image and save each segment.
+        Returns a list of dictionaries containing the path and file path for each segment.
         """
         self.perform_slic_segmentation()
         self.create_output_directory()
-        self.save_segments()
+        return self.save_segments()
         
     def display_segments(self):
         """
@@ -123,10 +139,3 @@ class SuperpixelSegmenter:
     def segment_and_display(self):
         self.perform_slic_segmentation()
         self.display_segments()
-
-
-# Example Usage:
-if __name__ == "__main__":
-    image_path = '\outputs/108450_A_1_7.jpg'
-    segmenter = SuperpixelSegmenter(image_path, n_segments=1000, compactness=10, sigma=1)
-    segmenter.segment_and_display()
