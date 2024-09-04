@@ -2,13 +2,14 @@ import faiss
 import numpy as np
 from pymongo import MongoClient
 from .database import MongoDBHandler  # Adjust this import based on your module structure
-
+from ..utils import log_message
 
 class VectorSearch:
     def __init__(self, dbHandler:MongoDBHandler):
         self.mongodb_handler = dbHandler
         self.index = None
         self.index_file = "faiss_index.idx"
+        self.ids = []
         faiss.omp_set_num_threads(4)  # Enable multi-threading with 4 threads
 
     def load_or_build_index(self, d=128):
@@ -22,7 +23,10 @@ class VectorSearch:
             print("Building a new index.")
             vectors = self.get_vectors()
             self.index = faiss.IndexFlatL2(d)
-            self.index.add(vectors)
+            # Only add to index if vectors.length > 0
+            if len(vectors) > 0:
+                log_message('info', f'The vectors being added are {vectors}')
+                self.index.add(vectors)
             faiss.write_index(self.index, self.index_file)
 
     def get_vectors(self):
@@ -31,7 +35,6 @@ class VectorSearch:
         """
         segments = self.mongodb_handler.collection.find()
         vectors = []
-        self.ids = []
 
         for segment in segments:
             vector = np.array(segment["vector"], dtype=np.float32)
@@ -44,11 +47,11 @@ class VectorSearch:
         """
         Add a new vector to the index, save it, and store it in the database using MongoDBHandler.
         """
-        new_vector = np.array(new_vector, dtype=np.float32).reshape(1, -1)
-        self.index.add(new_vector)
-        faiss.write_index(self.index, self.index_file)
-
-        if segment:
+        if segment is not None:
+            log_message('info', 'Adding new vector')
+            new_vector = np.array(new_vector, dtype=np.float32).reshape(1, -1)
+            self.index.add(new_vector)
+            faiss.write_index(self.index, self.index_file)
             segment.vector = new_vector.flatten().tolist()
             self.mongodb_handler.insert_segment(segment)
 
@@ -60,10 +63,12 @@ class VectorSearch:
         distances, indices = self.index.search(query_vector, k)
         
         results = []
-        for idx in indices[0]:
-            result = self.mongodb_handler.find_by_id(self.ids[idx])
-            results.append(result)
-        
+        try:
+            for idx in indices[0]:
+                result = self.mongodb_handler.find_by_vector(self.index.)
+                results.append(result)
+        except IndexError as e:
+            log_message('error', f'{idx=}, {len(self.ids)} : e')
         return results
 
     def close_connection(self):

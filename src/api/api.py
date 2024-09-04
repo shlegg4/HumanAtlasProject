@@ -82,9 +82,9 @@ class APIService:
         log_message('info', f'searching data with query vector {query_str}')
         try:
             # Convert the query string into a list of floats
-            query = [float(num) for num in query_str.strip('[]').split(',')]
-        except ValueError:
-            return jsonify({"error": "Invalid input format"}), 400
+            query = [float(num.strip(' ')) for num in query_str.strip('[]\n').split(',')]
+        except ValueError as e:
+            return jsonify({"error": f"Invalid input format :{e}"}), 400
 
         # Perform the search with the array of floats
         print(query)
