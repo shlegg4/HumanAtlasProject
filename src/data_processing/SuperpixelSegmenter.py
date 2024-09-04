@@ -54,7 +54,8 @@ class SuperpixelSegmenter:
         """
         coords = np.column_stack(np.where(mask))
         return coords
-    
+        
+        
     def save_segments(self):
         """
         Save each segment as an individual image in the output directory, filtering out low-variance segments.
@@ -67,32 +68,38 @@ class SuperpixelSegmenter:
         num_segments = np.max(self.segments) + 1
         self.segment_status = np.zeros(num_segments, dtype=bool)  # Track which segments are accepted
         segments_info = []  # List to store path and file path of each segment
+
+        # Create a mask for each segment and compute variance for all segments in one step
+        variances = np.array([
+            self.calculate_variance(self.image[self.segments == i])
+            for i in range(num_segments)
+        ])
         
+        # Determine which segments pass the variance threshold
+        accepted_segments = variances > self.variance_threshold
+        self.segment_status = accepted_segments  # Mark accepted/rejected segments
+
+        # Now process only the accepted segments
         for i in range(num_segments):
-            mask = self.segments == i
-            
-            # Create a white image instead of a black one
-            segment_image = np.ones_like(self.image) * 255  # White background
-            
-            # Copy the segment to the white image
-            segment_image[mask] = self.image[mask]
-            
-            # Calculate variance and filter out low-variance segments
-            variance = self.calculate_variance(segment_image)
-            if variance > self.variance_threshold:
-                output_path = os.path.join(self.output_dir, f'segment_{i}.png')
-                io.imsave(output_path, segment_image)
-                self.segment_status[i] = True  # Mark as accepted
-                segment_path = self.extract_segment_path(mask)  # Get path (coordinates)
+            if accepted_segments[i]:
+                mask = self.segments == i
+
+                # Create a white image background
+                segment_image = np.ones_like(self.image) * 255
+                
+                # Copy the segment to the white image
+                segment_image[mask] = self.image[mask]
+
+                # Extract the segment path (coordinates) and add the info to the list
+                segment_path = self.extract_segment_path(mask)
                 segments_info.append({
                     "path": segment_path,
-                    "file_path": output_path
+                    "image": segment_image
                 })
-                print(f'Segment {i}/{num_segments} saved to {output_path} with variance {variance:.2f}')
+                log_message('info', f'segment {i}/{num_segments} passed threshold')
             else:
-                self.segment_status[i] = False  # Mark as rejected
-                #print(f'Segment {i}/{num_segments} discarded due to low variance {variance:.2f}')
-        
+                log_message('info', f'segment {i}/{num_segments} did not pass threshold')
+
         return segments_info
     
     def segment_and_save(self):

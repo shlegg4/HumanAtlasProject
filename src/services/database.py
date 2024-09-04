@@ -1,5 +1,9 @@
 from pymongo import MongoClient
-from ..utils import Segment
+from ..utils import Segment, log_message
+
+
+
+
 
 class MongoDBHandler:
     def __init__(self, db_name, collection_name, uri="mongodb://localhost:27017/"):
@@ -15,6 +19,7 @@ class MongoDBHandler:
         Insert a Segment object into the collection.
         """
         document = segment.to_dict()
+        log_message('info', f'document : {document} inserted into database')
         result = self.collection.insert_one(document)
         return result.inserted_id
     

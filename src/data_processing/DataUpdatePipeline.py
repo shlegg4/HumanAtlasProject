@@ -2,8 +2,9 @@ import os
 import numpy as np
 from . import SuperpixelSegmenter, FeatureExtractor, PCAProcessor, ClusteringProcessor
 from ..services import MongoDBHandler, VectorSearch
-from ..utils.Segment import Segment
-from ..utils import log_message
+from ..utils import log_message, Segment, WorkItem
+
+
 
 class DataUpdatePipeline:
     def __init__(self, image_name: str):
@@ -12,8 +13,14 @@ class DataUpdatePipeline:
         self.segment_dir = f'./segments/{image_name}'
         self.db_handler = MongoDBHandler(db_name="your_db_name", collection_name="your_collection_name")
         self.vector_search_handler = VectorSearch(self.db_handler)
+        self.vector_search_handler.load_or_build_index()
 
     def update_database(self):
+        # Create new workitem 
+        workItem = WorkItem()
+
+
+
         # 1. Perform superpixel segmentation
         log_message('info', 'segmentation started')
         segmenter = SuperpixelSegmenter(self.image_path, n_segments=1000, compactness=10, sigma=1)
@@ -29,8 +36,8 @@ class DataUpdatePipeline:
         # Iterate over all image segments in the directory
         for segment in segments:
             path = segment['path']  # segment contains the path as a 2D numpy array
-            image_path = segment['file_path']  # Assuming each segment also has a path to the segment image
-            features = extractor.extract_features(image_path)
+            image = segment['image']  # Assuming each segment also has a path to the segment image
+            features = extractor.extract_features(image)
             all_features.append(features)
             paths.append(path)
 
