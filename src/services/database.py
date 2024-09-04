@@ -1,5 +1,5 @@
 from pymilvus import (
-    connections, FieldSchema, CollectionSchema, DataType, Collection
+    connections, FieldSchema, CollectionSchema, DataType, Collection, list_collections
 )
 from ..utils import Segment, log_message
 
@@ -20,44 +20,66 @@ class MilvusHandler:
         fields = [
             FieldSchema(name="id", dtype=DataType.INT64, is_primary=True, auto_id=True),  # Auto-incrementing ID
             FieldSchema(name="vector", dtype=DataType.FLOAT_VECTOR, dim=128),  # 128-dimensional vector
-            FieldSchema(name="bson_field", dtype=DataType.VARCHAR, max_length=1024)  # BSON data stored as VARCHAR
+            FieldSchema(name="path", dtype=DataType.VARCHAR, max_length=1024)  # BSON data stored as VARCHAR
         ]
 
         schema = CollectionSchema(fields, description="Collection for vectors and BSON data")
         
         # Create the collection (if not exists)
-        if self.collection_name not in Collection.list():
+        if self.collection_name not in list_collections():
             self.collection = Collection(name=self.collection_name, schema=schema)
+            self.create_index()
             log_message('info', f'Collection {self.collection_name} created.')
         else:
             self.collection = Collection(self.collection_name)
             log_message('info', f'Collection {self.collection_name} already exists.')
+        
+        
+        self.collection.load()
+
+    def create_index(self, index_type="IVF_FLAT", metric_type="L2", nlist=128):
+        """
+        Create an index on the vector field to allow for efficient vector search.
+        
+        Parameters:
+        index_type: The type of index (e.g., IVF_FLAT, IVF_SQ8, etc.)
+        metric_type: The distance metric (e.g., L2, IP)
+        nlist: Number of clusters used for index (affects search speed and accuracy)
+        """
+        index_params = {
+            "index_type": index_type,
+            "metric_type": metric_type,  # L2 distance by default
+            "params": {"nlist": nlist}   # Number of clusters (affects search performance)
+        }
+        # Create index on the "vector" field
+        self.collection.create_index("vector", index_params)
+        log_message('info', f'Index {index_type} created on the vector field.')
 
     def insert_segment(self, segment):
         """
         Insert a Segment object into the Milvus collection.
         """
         vector = segment.vector  # The vector (128-dim float list)
-        bson_data = segment.bson_data  # The BSON data stored as a string
+        path = segment.path  # The BSON data stored as a string
 
         # Insert data into Milvus
         data = [
             [vector],  # Vectors should be in a nested list (even if inserting one vector)
-            [bson_data]
+            [path]
         ]
         result = self.collection.insert(data)
         log_message('info', f'Segment with vector inserted into Milvus.')
-        return result.insert_ids
+        return result.primary_keys
 
     def get_segments(self):
         """
         Retrieve all segments in the collection (returning as Segment objects).
         """
         # Query all vectors and BSON fields
-        results = self.collection.query(expr="id >= 0", output_fields=["vector", "bson_field"])
+        results = self.collection.query(expr="id >= 0", output_fields=["vector", "path"])
         segments = []
         for result in results:
-            segment = Segment.from_dict(result)  # Assuming from_dict can handle vector and bson
+            segment = Segment.from_dict({"vector": result['vector'], "path": result['path']})
             segments.append(segment)
         
         return segments
@@ -68,11 +90,13 @@ class MilvusHandler:
         """
         # Search for top_k most similar vectors
         search_params = {"metric_type": "L2", "params": {"nprobe": 10}}
-        results = self.collection.search([vector], "vector", param=search_params, limit=top_k, output_fields=["bson_field"])
-
+        results = self.collection.search([vector], "vector", param=search_params, limit=top_k, output_fields=["vector", "path"])
+        
         if results:
             # Assuming the search returns BSON fields with the vector
-            segment = Segment.from_dict({"vector": vector, "bson_field": results[0].entity.bson_field})
+            log_message('info', f'results {results}')
+            segment_dict = {"vector":results[0][0].entity.get("vector"), "path":results[0][0].entity.get("path")}
+            segment = Segment.from_dict(segment_dict)
             return segment
         return None
 
@@ -80,7 +104,7 @@ class MilvusHandler:
         """
         Find a Segment by its _id (Milvus's auto-incrementing ID).
         """
-        result = self.collection.query(expr=f"id == {segment_id}", output_fields=["vector", "bson_field"])
+        result = self.collection.query(expr=f"id == {segment_id}", output_fields=["vector", "path"])
         if result:
             return Segment.from_dict(result[0])  # Assuming from_dict handles the dict format
         return None
@@ -94,7 +118,7 @@ class MilvusHandler:
 
         update_data = {
             "vector": new_segment.vector,
-            "bson_field": new_segment.bson_data
+            "path": new_segment.bson_data
         }
 
         result = self.collection.update([segment_id], update_data)

@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from . import SuperpixelSegmenter, FeatureExtractor, PCAProcessor, ClusteringProcessor
-from ..services import MongoDBHandler, VectorSearch
+from ..services import MilvusHandler
 from ..utils import log_message, Segment, WorkItem
 
 
@@ -11,9 +11,7 @@ class DataUpdatePipeline:
         self.image_name = image_name
         self.image_path = f'./outputs/{image_name}.jpg'
         self.segment_dir = f'./segments/{image_name}'
-        self.db_handler = MongoDBHandler(db_name="your_db_name", collection_name="your_collection_name")
-        self.vector_search_handler = VectorSearch(self.db_handler)
-        self.vector_search_handler.load_or_build_index()
+        self.db_handler = MilvusHandler(collection_name='pathology_slides2')
 
     def update_database(self):
         # Create new workitem 
@@ -56,7 +54,7 @@ class DataUpdatePipeline:
         log_message('info', 'Started Saving Vectors to Database')
         for i, label in enumerate(labels):
             segment = Segment(vector=reduced_features[i].tolist(), path=paths[i])
-            self.vector_search_handler.add_vector(new_vector=segment.vector, segment=segment)
+            self.db_handler.insert_segment(segment=segment)
 
         # Remember to close the database connection when done
         self.db_handler.close_connection()
