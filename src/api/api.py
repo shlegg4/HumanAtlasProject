@@ -58,7 +58,7 @@ class APIService:
 
         data = request.get_json()
         image_name = data.get('image_name')
-
+        print('got this far!')
         if not image_name:
             return jsonify({"message": "Image name is required"}), 400
 
