@@ -1,5 +1,6 @@
 from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
+from ..utils import log_message
 
 
 class ClusteringProcessor:

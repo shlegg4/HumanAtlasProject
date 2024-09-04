@@ -2,7 +2,7 @@ import os
 import numpy as np
 from skimage import io, segmentation, filters, measure, color
 import matplotlib.pyplot as plt
-
+from ..utils import log_message
 
 class SuperpixelSegmenter:
     def __init__(self, image_path, n_segments=200, compactness=10, sigma=1):

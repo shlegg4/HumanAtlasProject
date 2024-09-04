@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from torchvision import models, transforms
 from PIL import Image
+from ..utils import log_message
 
 class FeatureExtractor:
     def __init__(self, model_name='resnet50', layer='avgpool'):

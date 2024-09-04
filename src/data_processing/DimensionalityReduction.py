@@ -1,5 +1,6 @@
 from sklearn.decomposition import PCA
 import numpy as np
+from ..utils import log_message
 
 class PCAProcessor:
     def __init__(self, n_components=128):
