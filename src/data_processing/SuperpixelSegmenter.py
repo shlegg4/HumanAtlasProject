@@ -53,7 +53,8 @@ class SuperpixelSegmenter:
         Extract the path (coordinates) of the segment based on the mask.
         """
         coords = np.column_stack(np.where(mask))
-        return coords
+        mean_coords = np.mean(coords, axis=0)
+        return coords, mean_coords
         
         
     def save_segments(self):
@@ -91,9 +92,9 @@ class SuperpixelSegmenter:
                 segment_image[mask] = self.image[mask]
 
                 # Extract the segment path (coordinates) and add the info to the list
-                segment_path = self.extract_segment_path(mask)
+                segment_path, mean_coords = self.extract_segment_path(mask)
                 segments_info.append({
-                    "path": segment_path,
+                    "path": mean_coords,
                     "image": segment_image
                 })
                 log_message('info', f'segment {i}/{num_segments} passed threshold')

@@ -2,7 +2,7 @@ from flask import Flask, jsonify, request
 from flask_httpauth import HTTPTokenAuth
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from ..data_processing import DataUpdatePipeline
-from ..services import VectorSearch, MongoDBHandler
+from ..services import MilvusHandler
 from ..utils import log_message
 
 class APIService:
@@ -88,9 +88,8 @@ class APIService:
 
         # Perform the search with the array of floats
         print(query)
-        dbHandler = MongoDBHandler(db_name="your_db_name", collection_name="your_collection_name")
-        vectorSearch = VectorSearch(dbHandler=dbHandler)
-        vectorSearch.load_or_build_index()
-        result = vectorSearch.search(query)
+        dbHandler = MilvusHandler(collection_name='pathology_slides2')
+
+        result = dbHandler.find_by_vector(query)
         
-        return jsonify(result)
+        return jsonify(result.to_dict())

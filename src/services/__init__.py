@@ -1,2 +1,1 @@
-from .database import MongoDBHandler
-from .search import VectorSearch
+from .database import MilvusHandler
