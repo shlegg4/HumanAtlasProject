@@ -2,6 +2,7 @@ import os
 import requests
 import xml.etree.ElementTree as ET
 import json
+from ..utils import log_message
 
 class ImageDownloader:
     def __init__(self, protein, output_dir="outputs", processed_proteins_file="processed_proteins.json"):

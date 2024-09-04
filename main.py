@@ -1,9 +1,13 @@
 from flask import Flask
 from src.api.api import APIService
+from src.utils import setup_logger
 
 def create_app():
     app = Flask(__name__)
     app.config['JWT_SECRET_KEY'] = 'your_jwt_secret_key'  # Change this to a random secret key
+
+    # Setup logging util
+    setup_logger()
 
     # Initialize API service
     api_service = APIService(app)
