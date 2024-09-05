@@ -1,4 +1,3 @@
-import os
 import numpy as np
 from . import SuperpixelSegmenter, FeatureExtractor, PCAProcessor, ClusteringProcessor
 from ..services import MilvusHandler
@@ -12,12 +11,12 @@ class DataUpdatePipeline:
         self.image_path = f'./outputs/{image_name}.jpg'
         self.segment_dir = f'./segments/{image_name}'
         self.db_handler = MilvusHandler(collection_name='pathology_slides2')
+        self.feature_extractor = FeatureExtractor()
+        self.pca_processor = PCAProcessor(model_path='../dependencies/pca')
 
     def update_database(self):
         # Create new workitem 
         workItem = WorkItem()
-
-
 
         # 1. Perform superpixel segmentation
         log_message('info', 'segmentation started')
@@ -26,7 +25,7 @@ class DataUpdatePipeline:
 
         # 2. Convert superpixels into feature vectors
         log_message('info', 'feature extraction started')
-        extractor = FeatureExtractor()
+        
 
         all_features = []
         paths = []
@@ -35,7 +34,7 @@ class DataUpdatePipeline:
         for segment in segments:
             path = segment['path']  # segment contains the path as a 2D numpy array
             image = segment['image']  # Assuming each segment also has a path to the segment image
-            features = extractor.extract_features(image)
+            features = self.feature_extractor.extract_features(image)
             all_features.append(features)
             paths.append(path)
 
@@ -43,17 +42,13 @@ class DataUpdatePipeline:
 
         # 3. Perform PCA on feature vectors
         log_message('info', 'Started PCA')
-        pca_processor = PCAProcessor()
-        reduced_features = pca_processor.fit_transform(all_features)
-
-        # 4. Cluster reduced features
-        clustering_processor = ClusteringProcessor(n_clusters=5)
-        labels = clustering_processor.fit(reduced_features)
+        
+        reduced_features = self.pca_processor.fit_transform(all_features)
 
         # Store segments in the database
         log_message('info', 'Started Saving Vectors to Database')
-        for i, label in enumerate(labels):
-            segment = Segment(vector=reduced_features[i].tolist(), path=paths[i])
+        for i, reduced_feature in enumerate(reduced_features):
+            segment = Segment(vector=reduced_feature.tolist(), path=paths[i])
             self.db_handler.insert_segment(segment=segment)
 
         # Remember to close the database connection when done

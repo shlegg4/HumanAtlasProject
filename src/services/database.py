@@ -118,7 +118,7 @@ class MilvusHandler:
 
         update_data = {
             "vector": new_segment.vector,
-            "path": new_segment.bson_data
+            "path": new_segment.path
         }
 
         result = self.collection.update([segment_id], update_data)
