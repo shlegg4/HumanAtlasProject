@@ -20,7 +20,7 @@ def setup_logger():
     )
 
 def log_message(level, message):
-    # Get the current frame and extract the calling function's line number
+   # Get the current frame and extract the calling function's line number
     frame = inspect.currentframe().f_back
     line_number = frame.f_lineno
     function_name = frame.f_code.co_name
@@ -41,3 +41,4 @@ def log_message(level, message):
     else:
         logging.info(log_msg)
 
+    pass

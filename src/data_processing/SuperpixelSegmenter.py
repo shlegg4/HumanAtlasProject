@@ -5,12 +5,10 @@ import matplotlib.pyplot as plt
 from ..utils import log_message
 
 class SuperpixelSegmenter:
-    def __init__(self, image_path, n_segments=200, compactness=10, sigma=1):
+    def __init__(self, n_segments=200, compactness=10, sigma=1):
         """
         Initialize the SuperpixelSegmenter with the image and segmentation parameters.
         """
-        self.image_path = image_path
-        self.image = io.imread(image_path)
         self.n_segments = n_segments
         self.compactness = compactness
         self.sigma = sigma
@@ -103,11 +101,13 @@ class SuperpixelSegmenter:
 
         return segments_info
     
-    def segment_and_save(self):
+    def segment_and_save(self, image_path):
         """
         Perform the full process: segment the image and save each segment.
         Returns a list of dictionaries containing the path and file path for each segment.
         """
+        self.image_path = image_path
+        self.image = io.imread(image_path)
         self.perform_slic_segmentation()
         self.create_output_directory()
         return self.save_segments()

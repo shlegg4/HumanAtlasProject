@@ -4,3 +4,4 @@ from .FeatureExtraction import FeatureExtractor
 from .ImageDownloader import ImageDownloader
 from .SuperpixelSegmenter import SuperpixelSegmenter
 from .DataUpdatePipeline import DataUpdatePipeline
+from .DataSearchPipeline import DataSearchPipeline
