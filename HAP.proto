@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package HAP;
+
+service HAPService {
+  rpc Search (SearchImagePath) returns (PredictionResponse) {}
+  rpc Update (UpdateImagePath) returns (UpdateStatus) {}
+}
+
+message SearchImagePath {
+  string image_path = 1;  // Defines the path to the image
+}
+
+message UpdateImagePath {
+    string image_path = 1; 
+}
+
+message PredictionResponse {
+ string prediction = 1;  // Single prediction from the model
+}
+
+message UpdateStatus { 
+    bool status = 1; // True if successful false if not
+}

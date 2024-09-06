@@ -1,19 +1,21 @@
-import os
-import numpy as np
-from . import SuperpixelSegmenter, FeatureExtractor, PCAProcessor, ClusteringProcessor
+from . import FeatureExtractor, PCAProcessor
 from ..services import MilvusHandler
 from ..utils import log_message, Segment, WorkItem
-
+from skimage import io
 
 
 class DataSearchPipeline:
-    def __init__(self):
-        self.db_handler = MilvusHandler(collection_name='pathology_slides2')
-        self.feature_extractor = FeatureExtractor()
+    def __init__(self, db_Handler, feature_extractor, pca_processor):
+        log_message('info', 'started data search pipeline')
+        self.db_handler = db_Handler
+        self.feature_extractor = feature_extractor
+        self.pca_processor = pca_processor
 
-    def search(self, image):
+    def search(self, image_path):
         # Create new workitem 
         workItem = WorkItem()
+        
+        image = io.imread(image_path)
         
         # Extract the image feature
         log_message('info', 'feature extraction started')
@@ -22,8 +24,7 @@ class DataSearchPipeline:
 
         # 3. Perform PCA on feature vectors
         log_message('info', 'Started PCA')
-        pca_processor = PCAProcessor(model_path='../dependencies/pca')
-        reduced_features = pca_processor.transform(features)
+        reduced_features = self.pca_processor.transform(features)
         reduced_features = reduced_features.flatten()
         #4. Perform search on database
         print(reduced_features)

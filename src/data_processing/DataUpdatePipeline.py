@@ -6,22 +6,21 @@ from ..utils import log_message, Segment, WorkItem
 
 
 class DataUpdatePipeline:
-    def __init__(self, image_name: str):
-        self.image_name = image_name
-        self.image_path = f'./outputs/{image_name}.jpg'
-        self.segment_dir = f'./segments/{image_name}'
-        self.db_handler = MilvusHandler(collection_name='pathology_slides2')
-        self.feature_extractor = FeatureExtractor()
-        self.pca_processor = PCAProcessor(model_path='../dependencies/pca')
+    def __init__(self, db_handler, feature_extractor, pca_processor, superpixel_segmenter):
+        log_message('info', 'started data update pipeline')
+        self.db_handler = db_handler
+        self.feature_extractor = feature_extractor
+        self.pca_processor = pca_processor
+        self.segmenter = superpixel_segmenter
 
-    def update_database(self):
+    def update_database(self, image_path):
         # Create new workitem 
         workItem = WorkItem()
 
         # 1. Perform superpixel segmentation
         log_message('info', 'segmentation started')
-        segmenter = SuperpixelSegmenter(self.image_path, n_segments=1000, compactness=10, sigma=1)
-        segments = segmenter.segment_and_save()  # Assuming this method returns the segmented paths as numpy arrays
+       
+        segments = self.segmenter.segment_and_save(image_path)  # Assuming this method returns the segmented paths as numpy arrays
 
         # 2. Convert superpixels into feature vectors
         log_message('info', 'feature extraction started')
@@ -53,4 +52,5 @@ class DataUpdatePipeline:
 
         # Remember to close the database connection when done
         self.db_handler.close_connection()
+        return True
         
