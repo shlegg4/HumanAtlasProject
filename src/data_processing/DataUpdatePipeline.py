@@ -14,8 +14,8 @@ class DataUpdatePipeline:
         self.segmenter = superpixel_segmenter
 
     def update_database(self, image_path):
-        # Create new workitem 
-        workItem = WorkItem()
+        # Connect to milvus
+        self.db_handler.connect()
 
         # 1. Perform superpixel segmentation
         log_message('info', 'segmentation started')
