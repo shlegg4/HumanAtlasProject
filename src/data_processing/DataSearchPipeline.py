@@ -12,6 +12,9 @@ class DataSearchPipeline:
         self.pca_processor = pca_processor
 
     def search(self, image_path):
+        # Connect to milvus
+        self.db_handler.connect()
+
         # Create new workitem 
         workItem = WorkItem()
         
@@ -30,6 +33,9 @@ class DataSearchPipeline:
         print(reduced_features)
         result = self.db_handler.find_by_vector(reduced_features.tolist())
         
+        # Close connection to milvus
+        self.db_handler.close_connection()
+
         return result.to_dict()
        
     

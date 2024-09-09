@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from ..utils import log_message
 
 class SuperpixelSegmenter:
-    def __init__(self, n_segments=200, compactness=10, sigma=1):
+    def __init__(self, n_segments=300, compactness=50, sigma=0):
         """
         Initialize the SuperpixelSegmenter with the image and segmentation parameters.
         """
@@ -95,9 +95,9 @@ class SuperpixelSegmenter:
                     "path": mean_coords,
                     "image": segment_image
                 })
-                log_message('info', f'segment {i}/{num_segments} passed threshold')
+                log_message('info', f'segment {i}/{num_segments} passed')
             else:
-                log_message('info', f'segment {i}/{num_segments} did not pass threshold')
+                log_message('info', f'segment {i}/{num_segments} rejected')
 
         return segments_info
     

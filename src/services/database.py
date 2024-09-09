@@ -4,14 +4,20 @@ from pymilvus import (
 from ..utils import Segment, log_message
 
 class MilvusHandler:
-    def __init__(self, collection_name, host="localhost", port="19530"):
-        """
-        Initialize the MilvusHandler with the collection name and connect to Milvus.
-        """
-        connections.connect("default", host=host, port=port)
+    def __init__(self, collection_name, host="milvus-standalone", port="19530"):
         self.collection_name = collection_name
+        self.host = host
+        self.port = port
+        self.connect()
         self.create_collection()
 
+    def connect(self):
+        if not connections.has_connection("default"):
+            connections.connect("default", host=self.host, port=self.port)
+            log_message('info', 'Connected to Milvus.')
+        else:
+            log_message('info', 'Already connected to Milvus.')
+            
     def create_collection(self):
         """
         Create a collection in Milvus with a vector field (128 dimensions) and a BSON string field.

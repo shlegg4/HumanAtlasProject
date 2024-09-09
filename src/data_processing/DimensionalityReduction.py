@@ -14,8 +14,6 @@ class PCAProcessor:
         if self.model_path and os.path.exists(self.model_path):
             self.load_model(self.model_path)  # Load model if it exists
             log_message('info', 'Model loaded')
-        else:
-            assert 'Model could not be loaded'
 
     def fit_transform(self, features):
         if not self.is_fitted:
