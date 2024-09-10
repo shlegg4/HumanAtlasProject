@@ -67,11 +67,12 @@ class MilvusHandler:
         """
         vector = segment.vector  # The vector (128-dim float list)
         path = segment.path  # The BSON data stored as a string
-
+        url = segment.url
         # Insert data into Milvus
         data = [
             [vector],  # Vectors should be in a nested list (even if inserting one vector)
-            [path]
+            [path],
+            [url]
         ]
         result = self.collection.insert(data)
         log_message('info', f'Segment with vector inserted into Milvus.')

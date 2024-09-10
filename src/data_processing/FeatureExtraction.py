@@ -32,10 +32,7 @@ class FeatureExtractor:
             raise e
 
     def extract_features(self, image):
-        
-
         try:
-            log_message('info', 'Starting feature extraction...')
 
             # Convert the image array to a PIL image and log it
             image = Image.fromarray(np.uint8(image))

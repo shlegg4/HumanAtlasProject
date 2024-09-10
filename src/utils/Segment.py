@@ -3,7 +3,7 @@ import base64
 from .logging import log_message
 
 class Segment:
-    def __init__(self, vector, path):
+    def __init__(self, vector, path, url):
         """
         Initialize a Segment object with a 128-float vector and a 2D numpy array.
         """
@@ -11,6 +11,7 @@ class Segment:
             raise ValueError("Vector must be 128 floats long.")
         self.vector = vector
         self.path = self.encode_path(path)
+        self.url = url
 
     def encode_path(self, path):
         """

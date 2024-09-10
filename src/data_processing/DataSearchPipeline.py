@@ -1,8 +1,4 @@
-from . import FeatureExtractor, PCAProcessor
-from ..services import MilvusHandler
-from ..utils import log_message, Segment, WorkItem
-from skimage import io
-
+from ..utils import log_message, download_image, crop_image
 
 class DataSearchPipeline:
     def __init__(self, db_Handler, feature_extractor, pca_processor):
@@ -11,17 +7,15 @@ class DataSearchPipeline:
         self.feature_extractor = feature_extractor
         self.pca_processor = pca_processor
 
-    def search(self, image_path):
-        # Connect to milvus
-        self.db_handler.connect()
+    def search(self, image_url, boundary):
+       
 
-        # Create new workitem 
-        workItem = WorkItem()
-        
-        image = io.imread(image_path)
+        # Download and crop image
+        image = download_image(image_url=image_url)
+        image = crop_image(image, boundary=boundary)
         
         # Extract the image feature
-        log_message('info', 'feature extraction started')
+        log_message('info', f'feature extraction started {image}')
         features = self.feature_extractor.extract_features(image)
        
 
@@ -33,9 +27,6 @@ class DataSearchPipeline:
         print(reduced_features)
         result = self.db_handler.find_by_vector(reduced_features.tolist())
         
-        # Close connection to milvus
-        self.db_handler.close_connection()
-
         return result.to_dict()
        
     

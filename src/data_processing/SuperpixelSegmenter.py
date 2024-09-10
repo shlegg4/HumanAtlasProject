@@ -28,15 +28,6 @@ class SuperpixelSegmenter:
             start_label=1
         )
 
-    def create_output_directory(self):
-        """
-        Create a directory based on the input image name to store the segments.
-        """
-        image_name = os.path.splitext(os.path.basename(self.image_path))[0]
-        self.output_dir = os.path.join("segments", image_name)
-        
-        if not os.path.exists(self.output_dir):
-            os.makedirs(self.output_dir)
     
     def calculate_variance(self, segment_image):
         """
@@ -101,15 +92,13 @@ class SuperpixelSegmenter:
 
         return segments_info
     
-    def segment_and_save(self, image_path):
+    def segment_and_save(self, image):
         """
         Perform the full process: segment the image and save each segment.
         Returns a list of dictionaries containing the path and file path for each segment.
         """
-        self.image_path = image_path
-        self.image = io.imread(image_path)
+        self.image = image
         self.perform_slic_segmentation()
-        self.create_output_directory()
         return self.save_segments()
         
     def display_segments(self):

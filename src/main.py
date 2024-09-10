@@ -1,6 +1,7 @@
 from fastapi import FastAPI, WebSocket
 from src.workers.tasks import search_task, update_task
 import aio_pika
+from .utils import log_message
 import json
 
 app = FastAPI()
@@ -8,7 +9,7 @@ app = FastAPI()
 
 @app.post("/search")
 async def search_endpoint(item: dict):
-    result = search_task.delay(item.get('image_path'))
+    result = search_task.delay(item.get('image_url'), item.get('boundary'))
     return {"task_id": result.id}
 
 @app.get("/result")
@@ -21,7 +22,7 @@ async def get_result(task_id: str):
 
 @app.post("/update")
 async def update_endpoint(item: dict):
-    result = update_task.delay(item.get('image_path'))
+    result = update_task.delay(item.get('image_url'))
     return {"task_id": result.id}
 
 @app.get("/update-status")
@@ -36,21 +37,35 @@ async def get_update_status(task_id: str):
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
 
+    # Receive the task_id from the WebSocket client
+    task_id = await websocket.receive_text()
+    log_message('info', f"Client is interested in task_id: {task_id}")
+
     # Set up asynchronous RabbitMQ connection
     connection = await aio_pika.connect_robust("amqp://guest:guest@rabbitmq:5672/")
     channel = await connection.channel()
 
-    # Declare the exchange and queue
+    # Declare the fanout exchange
     exchange = await channel.declare_exchange("task_updates", aio_pika.ExchangeType.FANOUT, durable=True)
-    queue = await channel.declare_queue("shared_task_updates_queue", durable=True)
+
+    # Declare a unique, temporary, auto-deleted queue for this WebSocket connection
+    queue = await channel.declare_queue(exclusive=True, auto_delete=True)
+
+    # Bind the queue to the exchange
     await queue.bind(exchange)
 
     # Create an asynchronous consumer to receive messages
     async with queue.iterator() as queue_iter:
         async for message in queue_iter:
             async with message.process():
-                # Send RabbitMQ message to the WebSocket client
-                await websocket.send_text(message.body.decode())
+                # Try to decode and parse the message as JSON
+                try:
+                    decoded_message = message.body.decode()
+                    parsed_message = json.loads(decoded_message)
+                    await websocket.send_json(parsed_message)
+                except json.JSONDecodeError:
+                    # If the message is not valid JSON, send it as plain text
+                    await websocket.send_text(decoded_message)
 
     # Close the WebSocket connection
     await websocket.close()
