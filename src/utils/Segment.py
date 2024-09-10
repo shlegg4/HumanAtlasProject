@@ -41,7 +41,8 @@ class Segment:
         """
         return {
             "vector": self.vector,
-            "path": np.array2string(self.get_path(self.path))
+            "path": np.array2string(self.get_path(self.path)),
+            "url": self.url
         }
 
     @classmethod
@@ -51,4 +52,5 @@ class Segment:
         """
         log_message('info', f'{data=}')
         path = cls.get_path(data["path"])
-        return cls(vector=data["vector"], path=path)
+        url = data["url"]
+        return cls(vector=data["vector"], path=path, url=url)

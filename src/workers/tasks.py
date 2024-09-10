@@ -11,7 +11,7 @@ app = Celery('tasks')
 app.config_from_object('src.workers.celeryconfig')
 
 # Load models and services
-collection_name = 'thursday'
+collection_name = 'test_3'
 model_path = '../dependencies/pca'
 
 db_handler = MilvusHandler(collection_name=collection_name)

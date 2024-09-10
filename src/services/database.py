@@ -26,7 +26,8 @@ class MilvusHandler:
         fields = [
             FieldSchema(name="id", dtype=DataType.INT64, is_primary=True, auto_id=True),  # Auto-incrementing ID
             FieldSchema(name="vector", dtype=DataType.FLOAT_VECTOR, dim=128),  # 128-dimensional vector
-            FieldSchema(name="path", dtype=DataType.VARCHAR, max_length=1024)  # BSON data stored as VARCHAR
+            FieldSchema(name="path", dtype=DataType.VARCHAR, max_length=1024),  # BSON data stored as VARCHAR
+            FieldSchema(name="url", dtype=DataType.VARCHAR, max_length=256)
         ]
 
         schema = CollectionSchema(fields, description="Collection for vectors and BSON data")
@@ -97,12 +98,12 @@ class MilvusHandler:
         """
         # Search for top_k most similar vectors
         search_params = {"metric_type": "L2", "params": {"nprobe": 10}}
-        results = self.collection.search([vector], "vector", param=search_params, limit=top_k, output_fields=["vector", "path"])
+        results = self.collection.search([vector], "vector", param=search_params, limit=top_k, output_fields=["vector", "path", "url"])
         
         if results:
             # Assuming the search returns BSON fields with the vector
             log_message('info', f'results {results}')
-            segment_dict = {"vector":results[0][0].entity.get("vector"), "path":results[0][0].entity.get("path")}
+            segment_dict = {"vector":results[0][0].entity.get("vector"), "path":results[0][0].entity.get("path"), "url":results[0][0].entity.get("url")}
             segment = Segment.from_dict(segment_dict)
             return segment
         return None
