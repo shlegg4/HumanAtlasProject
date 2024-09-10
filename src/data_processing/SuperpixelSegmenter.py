@@ -5,12 +5,10 @@ import matplotlib.pyplot as plt
 from ..utils import log_message
 
 class SuperpixelSegmenter:
-    def __init__(self, image_path, n_segments=200, compactness=10, sigma=1):
+    def __init__(self, n_segments=300, compactness=50, sigma=0):
         """
         Initialize the SuperpixelSegmenter with the image and segmentation parameters.
         """
-        self.image_path = image_path
-        self.image = io.imread(image_path)
         self.n_segments = n_segments
         self.compactness = compactness
         self.sigma = sigma
@@ -53,7 +51,8 @@ class SuperpixelSegmenter:
         Extract the path (coordinates) of the segment based on the mask.
         """
         coords = np.column_stack(np.where(mask))
-        return coords
+        mean_coords = np.mean(coords, axis=0)
+        return coords, mean_coords
         
         
     def save_segments(self):
@@ -91,22 +90,24 @@ class SuperpixelSegmenter:
                 segment_image[mask] = self.image[mask]
 
                 # Extract the segment path (coordinates) and add the info to the list
-                segment_path = self.extract_segment_path(mask)
+                segment_path, mean_coords = self.extract_segment_path(mask)
                 segments_info.append({
-                    "path": segment_path,
+                    "path": mean_coords,
                     "image": segment_image
                 })
-                log_message('info', f'segment {i}/{num_segments} passed threshold')
+                log_message('info', f'segment {i}/{num_segments} passed')
             else:
-                log_message('info', f'segment {i}/{num_segments} did not pass threshold')
+                log_message('info', f'segment {i}/{num_segments} rejected')
 
         return segments_info
     
-    def segment_and_save(self):
+    def segment_and_save(self, image_path):
         """
         Perform the full process: segment the image and save each segment.
         Returns a list of dictionaries containing the path and file path for each segment.
         """
+        self.image_path = image_path
+        self.image = io.imread(image_path)
         self.perform_slic_segmentation()
         self.create_output_directory()
         return self.save_segments()

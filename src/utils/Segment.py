@@ -1,6 +1,6 @@
 import numpy as np
-from bson.binary import Binary
-
+import base64
+from .logging import log_message
 
 class Segment:
     def __init__(self, vector, path):
@@ -10,35 +10,37 @@ class Segment:
         if len(vector) != 128:
             raise ValueError("Vector must be 128 floats long.")
         self.vector = vector
-        self.bson_path = self.encode_path(path)
+        self.path = self.encode_path(path)
 
     def encode_path(self, path):
         """
-        Encode a numpy 2D array into BSON format.
+        Convert numpy array to bytes and then encode it to base64 string.
         """
-        # Convert the numpy array to a bytes object
-        np_bytes = np.ndarray.tobytes(path)
-        # Encode the bytes object to BSON Binary format
-        return Binary(np_bytes)
+        # Convert numpy array to bytes
+        path_bytes = path.tobytes()
+        # Encode the bytes to base64 string
+        path_base64 = base64.b64encode(path_bytes).decode('utf-8')
+        log_message('info', f'{path_base64=}')
+        return path_base64
 
-    def get_path(self):
+    @classmethod
+    def get_path(cls, encoded_path):
         """
-        Gets the path as a numpy array.
+        Decode the base64 string back into a numpy array.
         """
-        # Decode the BSON Binary data to a bytes object
-        np_bytes = bytes(self.bson_path)
-        # Convert the bytes object back to a numpy array
-        path = np.frombuffer(np_bytes, dtype=np.float64)
-        # Reshape the array as needed (you need to know the shape in advance)
-        return path.reshape(-1, 2)  # Example shape, adjust as necessary
-
+        # Decode the base64 string into bytes
+        path_bytes = base64.b64decode(encoded_path)
+        # Convert the bytes back into a numpy array
+        path = np.frombuffer(path_bytes, dtype=np.float64)  # Use the original dtype of the array
+        return path
+       
     def to_dict(self):
         """
         Convert the Segment object to a dictionary for MongoDB storage.
         """
         return {
             "vector": self.vector,
-            "bson_data": self.bson_path
+            "path": np.array2string(self.get_path(self.path))
         }
 
     @classmethod
@@ -46,5 +48,6 @@ class Segment:
         """
         Create a Segment object from a dictionary retrieved from MongoDB.
         """
-        path = cls.get_path(cls, data["bson_path"])
+        log_message('info', f'{data=}')
+        path = cls.get_path(data["path"])
         return cls(vector=data["vector"], path=path)
