@@ -6,6 +6,7 @@ from src.services import MilvusHandler
 from ..data_processing import FeatureExtractor, SuperpixelSegmenter, PCAProcessor, DataUpdatePipeline, DataSearchPipeline
 import json
 import asyncio
+from ..utils import log_message
 
 app = Celery('tasks')
 app.config_from_object('src.workers.celeryconfig')
@@ -51,7 +52,6 @@ async def send_status_update(task_id, status):
     # Convert the dictionary to a JSON-encoded string
     json_message = json.dumps(message_body)
 
-
     connection = await aio_pika.connect_robust("amqp://guest:guest@rabbitmq:5672/")
     async with connection:
         channel = await connection.channel()
@@ -61,7 +61,7 @@ async def send_status_update(task_id, status):
 
         # Publish task status to RabbitMQ exchange
         message = aio_pika.Message(json_message.encode())
-        await exchange.publish(message, routing_key="")
+        await exchange.publish(message, routing_key="update_message")
 
         # Close the connection
         await connection.close()
@@ -93,3 +93,4 @@ def update_task(self, image_url):
     asyncio.run(send_status_update(self.request.id, "SUCCESS"))
 
     return json.dumps(status)
+

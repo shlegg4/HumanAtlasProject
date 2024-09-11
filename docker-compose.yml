@@ -23,7 +23,7 @@ services:
   # Celery worker service
   celery_worker:
     build: .
-    command: bash -c "source activate humanatlasproject && celery -A src.workers.tasks worker --pool=threads --loglevel=INFO"
+    command: bash -c "source activate humanatlasproject && celery -A src.workers.tasks worker -P threads --loglevel=INFO"
     volumes:
       - .:/app
     runtime: nvidia  # Use NVIDIA runtime for GPU access

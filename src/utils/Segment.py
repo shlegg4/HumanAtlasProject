@@ -41,7 +41,7 @@ class Segment:
         """
         return {
             "vector": self.vector,
-            "path": np.array2string(self.get_path(self.path)),
+            "path": self.get_path(self.path).tolist(),
             "url": self.url
         }
 
@@ -50,7 +50,6 @@ class Segment:
         """
         Create a Segment object from a dictionary retrieved from MongoDB.
         """
-        log_message('info', f'{data=}')
         path = cls.get_path(data["path"])
         url = data["url"]
         return cls(vector=data["vector"], path=path, url=url)

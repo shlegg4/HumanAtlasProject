@@ -102,7 +102,6 @@ class MilvusHandler:
         
         if results:
             # Assuming the search returns BSON fields with the vector
-            log_message('info', f'results {results}')
             segment_dict = {"vector":results[0][0].entity.get("vector"), "path":results[0][0].entity.get("path"), "url":results[0][0].entity.get("url")}
             segment = Segment.from_dict(segment_dict)
             return segment
